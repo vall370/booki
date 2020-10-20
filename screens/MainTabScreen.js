@@ -28,115 +28,149 @@ function ActionBarIcon() {
       }} />
   );
 }
-const MainTabScreen = () => (
-  <Tab.Navigator
-    initialRouteName="Home"
-    activeColor="#fff"
-  >
-    <Tab.Screen
-      name="Home"
-      component={HomeStackScreen}
+function MainTabScreen({ navigation, route }) {
+  return (
+    <Tab.Navigator
+      initialRouteName="Home"
+      activeColor="white"
+      tabBarOptions={{
+        keyboardHidesTabBar: true,
+        activeTintColor: 'white',
+        inactiveTintColor: '#6fb6ae',
+        style: {
+          backgroundColor: '#0f8679',
+        },
+      }}
 
-      options={{
-        tabBarLabel: 'Home',
-        tabBarColor: '#009310',
-        tabBarIcon: ({ color }) => (
-          <Icon name="ios-home" color={color} size={26} />
-        ),
+    >
 
-      }}
-    />
-    <Tab.Screen
-      name="Notifications"
-      component={DetailsStackScreen}
-      options={{
-        tabBarLabel: 'Updates',
-        tabBarColor: '#1f65ff',
-        tabBarIcon: ({ color }) => (
-          <Icon name="ios-notifications" color={color} size={26} />
-        ),
-      }}
-    />
-    <Tab.Screen
-      name="Profile"
-      component={ProfileScreen}
-      options={{
-        tabBarLabel: 'Profile',
-        tabBarColor: '#694fad',
-        tabBarIcon: ({ color }) => (
-          <Icon name="ios-person" color={color} size={26} />
-        ),
-      }}
-    />
-    <Tab.Screen
-      name="Explore"
-      component={ExploreScreen}
-      options={{
-        tabBarLabel: 'Explore',
-        tabBarColor: '#d02860',
-        tabBarIcon: ({ color }) => (
-          <Icon name="ios-aperture" color={color} size={26} />
-        ),
-      }}
-    />
-  </Tab.Navigator>
-);
+      <Tab.Screen
+        name="Notifications"
+        component={DetailsStackScreen}
+        options={{
+          tabBarLabel: 'Updates',
+          tabBarColor: '#009310',
+          tabBarIcon: ({ color, tintColor, focused }) => (
+            <Icon name={focused ? "receipt" : "receipt-outline"} color={color} size={26} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Home"
+        component={HomeStackScreen}
+
+        options={{
+          activeColor: '#009310',
+          tabBarLabel: 'Home',
+          tabBarColor: '#009310',
+          tabBarIcon: ({ color, tintColor, focused }) => (
+            <Icon name={focused ? "home" : "home-outline"} color={color} size={26} />
+          ),
+
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profil',
+          tabBarColor: '#009310',
+          tabBarIcon: ({ color, tintColor, focused }) => (
+            <Icon name={focused ? "person" : "person-outline"} color={color} size={26} />
+          ),
+        }}
+      />
+
+      {/* <Tab.Screen
+        name="Explore"
+        component={ExploreScreen}
+        options={{
+          tabBarLabel: 'Explore',
+          tabBarColor: '#009310',
+          tabBarIcon: ({ color }) => (
+            <Icon name="ios-aperture" color={color} size={26} />
+          ),
+        }}
+      /> */}
+    </Tab.Navigator>
+  )
+}
 
 export default MainTabScreen;
 
-const HomeStackScreen = ({ navigation }) => (
-  <HomeStack.Navigator screenOptions={{
-    headerStyle: {
-      backgroundColor: '#009387',
-    },
-    headerTintColor: '#fff',
-    headerTitleStyle: {
-      fontWeight: 'bold'
+function HomeStackScreen({ navigation, route }) {
+  try {
+    let tabBarVisible = true
+    if (route.state.index === 0) {
+      tabBarVisible = false
     }
-  }}>
-    <HomeStack.Screen name="Home" component={HomeScreen} options={{
+    navigation.setOptions({
+      tabBarVisible: tabBarVisible
+    })
+  } catch {
+    console.log("route state is undefined")
+  }
+  return (
+    <HomeStack.Navigator screenOptions={{
 
-      headerShown: false,
-      headerBackTitleVisible: false,
-      title: 'Overview',
-      headerLeft: () => (
-        <Icon.Button name="ios-menu" size={25} backgroundColor="#009387" onPress={() => navigation.openDrawer()}></Icon.Button>
-      ),
-    }} />
-    <HomeStack.Screen name="Bastu" component={SaunaScreen} options={{
-
-      headerShown: true,
-      // headerBackTitleVisible: true,
-      // title: 'Sauna',
-    }} />
-    <HomeStack.Screen name="Tvättstuga" component={LaundreeScreen} options={{
-      headerTitleStyle: { alignSelf: 'center' },
+      tabBarColor: '#020093',
       headerStyle: {
-        backgroundColor: 'white',
+        backgroundColor: '#009387',
       },
-      headerShown: true,
-      // headerBackTitleVisible: true,
-      // title: 'Sauna',
-      headerRight: props => <ActionBarIcon {...props} />
+      headerTintColor: '#fff',
+      headerTitleStyle: {
+        fontWeight: 'bold'
+      }
+    }}>
+      <HomeStack.Screen name="Home" component={HomeScreen} options={{
+        tabBarColor: '#009310',
+        headerShown: false,
+        headerBackTitleVisible: false,
+        title: 'Overview',
+        headerLeft: () => (
+          <Icon.Button name="ios-menu" size={25} backgroundColor="#009387" onPress={() => navigation.openDrawer()}></Icon.Button>
+        ),
+      }} />
+      <HomeStack.Screen name="Bastu" component={SaunaScreen} options={{
+        tabBarColor: '#009310',
 
-    }} />
-  </HomeStack.Navigator>
-);
+        headerShown: false,
+        // headerBackTitleVisible: true,
+        // title: 'Sauna',
+      }} />
+      <HomeStack.Screen name="Tvättstuga" component={LaundreeScreen} options={{
+        tabBarColor: '#009310',
 
-const DetailsStackScreen = ({ navigation }) => (
-  <DetailsStack.Navigator screenOptions={{
-    headerStyle: {
-      backgroundColor: '#1f65ff',
-    },
-    headerTintColor: '#fff',
-    headerTitleStyle: {
-      fontWeight: 'bold'
-    }
-  }}>
-    <DetailsStack.Screen name="Details" component={DetailsScreen} options={{
-      headerLeft: () => (
-        <Icon.Button name="ios-menu" size={25} backgroundColor="#1f65ff" onPress={() => navigation.openDrawer()}></Icon.Button>
-      )
-    }} />
-  </DetailsStack.Navigator>
-);
+        headerTitleStyle: { alignSelf: 'center' },
+        headerStyle: {
+          backgroundColor: 'white',
+        },
+        headerShown: false,
+        // headerBackTitleVisible: true,
+        // title: 'Sauna',
+        headerRight: props => <ActionBarIcon {...props} />
+
+      }} />
+    </HomeStack.Navigator>
+  )
+}
+function DetailsStackScreen({ navigation, route }) {
+  return (
+    <DetailsStack.Navigator screenOptions={{
+      headerStyle: {
+        backgroundColor: '#1f65ff',
+      },
+      headerTintColor: '#fff',
+      headerTitleStyle: {
+        fontWeight: 'bold'
+      }
+    }}>
+      <DetailsStack.Screen name="Details" component={DetailsScreen} options={{
+
+        headerLeft: () => (
+          <Icon.Button name="ios-menu" size={25} backgroundColor="#1f65ff" onPress={() => navigation.openDrawer()}></Icon.Button>
+        )
+      }} />
+    </DetailsStack.Navigator>
+  )
+}

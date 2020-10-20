@@ -29,6 +29,8 @@ export default class ChooseCompany extends Component {
             company2: item.company,
             image: item.image,
         });
+        AsyncStorage.setItem('company', this.state.company2);
+
         this.props.navigation.navigate('ChoosenCompany', {
             image: this.state.image,
             company: this.state.company2,

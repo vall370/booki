@@ -1,11 +1,13 @@
 import React from 'react';
-import { Dimensions, View, Text, Button, ImageBackground, StyleSheet, StatusBar, Image } from 'react-native';
+import { Dimensions, View, Text, ImageBackground, StyleSheet, StatusBar, Image } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-
+import { AuthContext } from '../components/context';
+import { Button } from 'react-native-paper'
 var { width, height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
+  const { signOut } = React.useContext(AuthContext);
 
   const { colors } = useTheme();
 
@@ -16,60 +18,51 @@ const HomeScreen = ({ navigation }) => {
       <View>
         <View style={styles.splitScreen}>
           <View style={styles.leftPane}>
-            <ImageBackground
+            <Image
               source={require('../assets/6.jpg')}
-
               style={{
                 height: '100%',
                 width: '100%',
                 position: "relative", // because it's parent
-                top: 2,
-                left: 2
               }}
             />
           </View>
           <View style={styles.rightPane}>
-            <ImageBackground
+            <Image
               source={require('../assets/1.jpg')}
               style={{
                 height: '100%',
                 width: '100%',
                 position: "relative", // because it's parent
-                top: 2,
-                left: 2
+
               }}
             />
           </View>
         </View>
       </View>
       <View style={styles.background}>
-        <ImageBackground style={{ position: 'absolute', width: 200, height: '50%', alignSelf: 'center', marginTop: 50 }} source={require('../assets/Diös.png')} />
-        <View style={styles.splitScreen}>
+        <ImageBackground style={{ position: 'absolute', width: 400, height: '50%', alignSelf: 'center', marginTop: 50, resizeMode: 'contain' }} source={{
+          uri: 'http://192.168.0.14:8080/uploads/foretag/lulebo2.png',
+        }} />
+        <View style={{
+          marginTop: 50,
+          flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'space-around'
+        }}>
+          <Button style={styles.button2} mode="contained" onPress={() => navigation.navigate('Bastu', {
+            itemId: 86,
+            otherParam: 'anything you want here',
+          })}>Bastu</Button>
 
-          <View style={styles.leftPane}>
-
-            <TouchableOpacity style={styles.button2}>
-              <Text style={{ fontSize: 16, color: 'white', textAlign: 'center', }} onPress={() => {
-                /* 1. Navigate to the Details route with params */
-                navigation.navigate('Bastu', {
-                  itemId: 86,
-                  otherParam: 'anything you want here',
-                });
-              }}> Bastu </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.rightPane}>
-
-            <TouchableOpacity style={styles.button2}>
-              <Text style={{ fontSize: 16, color: 'white', textAlign: 'center' }} onPress={() => navigation.navigate("Tvättstuga")}> Tvättstuga </Text>
-            </TouchableOpacity>
-          </View>
+          <Button style={styles.button2} mode="contained" onPress={() => navigation.navigate("Tvättstuga")}>Tvättstuga</Button>
         </View>
         <View style={styles.buttonContainer}>
+          <Button style={styles.button} onPress={() => { signOut() }}>
+            <Text style={{ fontSize: 12, color: '#0f8679', textAlign: 'center', backgroundColor: 'transparent', fontWeight: 'bold' }}> Logga ut </Text>
 
-          <TouchableOpacity style={styles.button}>
-            <Text style={{ fontSize: 16, color: 'white', textAlign: 'center', backgroundColor: 'transparent', }}> Logga ut </Text>
-          </TouchableOpacity>
+          </Button>
+
         </View>
       </View>
     </View >
@@ -98,7 +91,7 @@ const styles = StyleSheet.create({
   },
   background: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(255,255,255, 0.4)',
 
   },
   card: {
@@ -109,32 +102,34 @@ const styles = StyleSheet.create({
     height: 200
   },
   button: {
-    borderColor: 'white', borderWidth: 1, borderRadius: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', height: 44, width: 200,
+    borderColor: '#0f8679', borderWidth: 2, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', height: 44, width: 200,
   },
   button2: {
-    height: 44, width: 150, borderWidth: 1, borderRadius: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', height: 44, backgroundColor: '#ac0d2e', marginTop: 300
+    width: 150, borderWidth: 1, borderRadius: 20, alignItems: 'center', height: 44, backgroundColor: '#0f8679', marginTop: 300
   },
   overlay: {
     flex: 1,
-    // position: 'absolute',
-    // left: 0,
-    // top: 0,
+
     opacity: 0.5,
     backgroundColor: 'black',
-    // width: width,
-    // height: height
+
   },
   splitScreen: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%'
+  },
+  splitScreen1: {
     display: 'flex',
     flexDirection: 'row',
     height: '100%'
   },
   leftPane: {
-    width: '50%',
+    height: '50%',
     flex: 1, alignItems: 'center', justifyContent: 'center'
   },
   rightPane: {
-    width: '50%',
+    height: '50%',
     flex: 1, alignItems: 'center', justifyContent: 'center'
   },
   viewTextStyle: {
