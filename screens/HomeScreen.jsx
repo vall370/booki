@@ -50,16 +50,16 @@ const HomeScreen = ({ navigation }) => {
           flexDirection: 'row',
           justifyContent: 'space-around'
         }}>
-          <Button style={styles.button2} mode="contained" onPress={() => navigation.navigate('Bastu', {
+          <Button color={colors.button} style={styles.button2} mode="contained" onPress={() => navigation.navigate('Bastu', {
             itemId: 86,
             otherParam: 'anything you want here',
           })}>Bastu</Button>
 
-          <Button style={styles.button2} mode="contained" onPress={() => navigation.navigate("Tvättstuga")}>Tvättstuga</Button>
+          <Button color={colors.button} style={[styles.button2]} mode="contained" onPress={() => navigation.navigate("Tvättstuga")}>Tvättstuga</Button>
         </View>
         <View style={styles.buttonContainer}>
-          <Button style={styles.button} onPress={() => { signOut() }}>
-            <Text style={{ fontSize: 12, color: '#0f8679', textAlign: 'center', backgroundColor: 'transparent', fontWeight: 'bold' }}> Logga ut </Text>
+          <Button color={colors.button} style={[styles.button, { borderColor: colors.button }]} onPress={() => { signOut() }}>
+            <Text style={{ fontSize: 12, color: colors.button, textAlign: 'center', backgroundColor: 'transparent', fontWeight: 'bold' }}> Logga ut </Text>
 
           </Button>
 
@@ -73,6 +73,7 @@ const HomeScreen = ({ navigation }) => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     flexDirection: 'column'
@@ -102,10 +103,10 @@ const styles = StyleSheet.create({
     height: 200
   },
   button: {
-    borderColor: '#0f8679', borderWidth: 2, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', height: 44, width: 200,
+    borderWidth: 2, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', height: 44, width: 200,
   },
   button2: {
-    width: 150, borderWidth: 1, borderRadius: 20, alignItems: 'center', height: 44, backgroundColor: '#0f8679', marginTop: 300
+    width: 150, borderWidth: 1, borderRadius: 20, alignItems: 'center', height: 44, marginTop: 300
   },
   overlay: {
     flex: 1,

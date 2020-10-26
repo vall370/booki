@@ -12,6 +12,7 @@ import DetailsScreen from './DetailsScreen';
 import ExploreScreen from './ExploreScreen';
 import ProfileScreen from './ProfileScreen';
 import { Image } from 'react-native';
+import { useTheme } from '@react-navigation/native';
 
 const HomeStack = createStackNavigator();
 const DetailsStack = createStackNavigator();
@@ -29,6 +30,8 @@ function ActionBarIcon() {
   );
 }
 function MainTabScreen({ navigation, route }) {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -38,7 +41,7 @@ function MainTabScreen({ navigation, route }) {
         activeTintColor: 'white',
         inactiveTintColor: '#6fb6ae',
         style: {
-          backgroundColor: '#0f8679',
+          backgroundColor: colors.tabBarColor,
         },
       }}
 
@@ -49,7 +52,7 @@ function MainTabScreen({ navigation, route }) {
         component={DetailsStackScreen}
         options={{
           tabBarLabel: 'Updates',
-          tabBarColor: '#009310',
+          tabBarColor: colors.tabBarColor,
           tabBarIcon: ({ color, tintColor, focused }) => (
             <Icon name={focused ? "receipt" : "receipt-outline"} color={color} size={26} />
           ),
@@ -62,7 +65,7 @@ function MainTabScreen({ navigation, route }) {
         options={{
           activeColor: '#009310',
           tabBarLabel: 'Home',
-          tabBarColor: '#009310',
+          tabBarColor: colors.tabBarColor,
           tabBarIcon: ({ color, tintColor, focused }) => (
             <Icon name={focused ? "home" : "home-outline"} color={color} size={26} />
           ),
@@ -74,7 +77,7 @@ function MainTabScreen({ navigation, route }) {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profil',
-          tabBarColor: '#009310',
+          tabBarColor: colors.tabBarColor,
           tabBarIcon: ({ color, tintColor, focused }) => (
             <Icon name={focused ? "person" : "person-outline"} color={color} size={26} />
           ),
@@ -99,6 +102,8 @@ function MainTabScreen({ navigation, route }) {
 export default MainTabScreen;
 
 function HomeStackScreen({ navigation, route }) {
+  const { colors } = useTheme();
+  console.log(colors)
   try {
     let tabBarVisible = true
     if (route.state.index === 0) {
@@ -113,9 +118,9 @@ function HomeStackScreen({ navigation, route }) {
   return (
     <HomeStack.Navigator screenOptions={{
 
-      tabBarColor: '#020093',
+      tabBarColor: colors.tabBarColor,
       headerStyle: {
-        backgroundColor: '#009387',
+        backgroundColor: colors.tabBarColor,
       },
       headerTintColor: '#fff',
       headerTitleStyle: {
@@ -123,7 +128,7 @@ function HomeStackScreen({ navigation, route }) {
       }
     }}>
       <HomeStack.Screen name="Home" component={HomeScreen} options={{
-        tabBarColor: '#009310',
+        tabBarColor: colors.tabBarColor,
         headerShown: false,
         headerBackTitleVisible: false,
         title: 'Overview',
@@ -139,7 +144,7 @@ function HomeStackScreen({ navigation, route }) {
         // title: 'Sauna',
       }} />
       <HomeStack.Screen name="Tvättstuga" component={LaundreeScreen} options={{
-        tabBarColor: '#009310',
+        tabBarColor: colors.primary,
 
         headerTitleStyle: { alignSelf: 'center' },
         headerStyle: {
