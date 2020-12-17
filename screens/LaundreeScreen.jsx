@@ -1,9 +1,8 @@
-import React, { Component } from 'react';
+import React, {Component, useEffect, useState, useRef} from 'react';
 import AsyncStorage from '@react-native-community/async-storage';
 
 import {
   View,
-  TextInput,
   Text,
   StyleSheet,
   Image,
@@ -13,98 +12,139 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { CalendarList } from 'react-native-calendars';
+import {CalendarList} from 'react-native-calendars';
 import QRCode from 'react-native-qrcode-svg';
 import axios from 'axios';
-import { Card, Button, Appbar, Paragraph } from 'react-native-paper';
+import {
+  Card,
+  Button,
+  Appbar,
+  Paragraph,
+  ActivityIndicator,
+  TextInput,
+  TouchableRipple,
+  Switch,
+} from 'react-native-paper';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { normalize } from '../core/size';
+import {normalize} from '../core/size';
+import {useTheme} from '@react-navigation/native';
+import {AuthContext} from '../components/context';
+import NotifService from '../core/NotifService';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
-class LaundreeScreen extends Component {
-  constructor() {
-    super();
+export default function LaundreeScreen({navigation}) {
+  const [currentDay, setCurrentDay] = useState(moment().format('YYYY-MM-DD'));
+  const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
+  const [events, setEvents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentApartment, setCurrentApartment] = useState('');
+  const [currentBuilding, setCurrentBuilding] = useState('');
+  const [currentFocus, setCurrentFocus] = useState(null);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
+  const [building, setBuilding] = useState('');
+  const {colors} = useTheme();
+  const [selected, setSelected] = useState('');
+  const [timeslotid, setTimeslotid] = useState([]);
+  const {signOut, toggleTheme} = React.useContext(AuthContext);
+  const notif = useRef(new NotifService(onRegister, onNotif));
+  const onNotif = notif => {
+    Alert.alert(notif.title, notif.message);
+  };
+  const onRegister = token => {
+    setRegisterToken(token.token);
+    setFcmRegistered(true);
+  };
+  const onSetReminder = datetime => {
+    const {
+      date,
+      apartment,
+      building,
+      start_time: startTime,
+      end_time: endTime,
+    } = props;
+    const remindDate = moment(datetime).format('YYYY-MM-DD');
+    const remindTime = moment(datetime).format('hh:mm');
+    let title = 'Reminder!';
+    let message = `You have booked ${apartment} ${building} on ${moment(
+      date,
+    ).format('YYYY-MM-DD')} at ${startTime} - ${endTime}`;
+    let date1 = datetime;
+    notif.current.scheduleNotif(title, message, date1);
 
-    this.state = {
-      currentDay: moment().format('YYYY-MM-DD'),
-      selected: moment().format('YYYY-MM-DD'),
-      events: [],
-      isLoading: true,
-      currentApartment: null,
-      currentBuilding: null,
-      currentFocus: null,
-      isButtonVisible: false,
-      text: 'http://facebook.github.io/-native/',
-      building: '',
-      colors: {},
-    };
-  }
-
-  componentDidMount() {
-    //   this.getColors();
-    this.getEvents();
-    this.getCurrentApartment();
-    this.getBuilding();
-  }
-
-  onDayPress = day => {
-    this.setState({ selected: day.dateString }, this.getEvents);
+    Alert.alert(
+      'Done!',
+      `You have set a reminder on ${remindDate} at ${remindTime} for this booking.`,
+      [
+        {
+          title: 'Okay',
+          onPress: toggleDatePicker,
+        },
+      ],
+    );
   };
 
-  onBookPress = () => {
-    const {
-      currentFocus,
-      currentApartment,
-      currentBuilding,
-      selected,
-    } = this.state;
+  const onBookPress = () => {
+    console.log({
+      rid: 1,
+      building: currentBuilding,
+      apartment: currentApartment,
+      date: selectedDay,
+      tid: currentFocus,
+    });
+    goToConfirmedBooking();
     axios
       // This is where the data is hosted
-      .post('api.vasketid.se/laundree1/public/booking', {
+      .post('http://167.99.133.22:5556/api/bookings/booking', {
         rid: 1,
         building: currentBuilding,
         apartment: currentApartment,
-        tid: currentFocus.tid,
-        date: selected,
+        date: selectedDay,
+        tid: currentFocus,
       })
       // Once we get a response and store data, let's change the loading state
       .then(response => {
         if (response && response.data && response.status === 201) {
-          this.getEvents();
+          getEvents();
           const startTime = moment(
             currentFocus.timeslot.split('-')[0],
             'hh:mm',
           );
-          /*             const notifyTime = startTime.subtract(2, 'hours').toDate();
-                                scheduleNotification(
-                                  'Reminder!',
-                                  `You have booked ${currentApartment} ${currentBuilding} on ${selected} at ${
-                                  currentFocus.timeslot
-                                  }`,
-                                  notifyTime,
-                                ); */
-          const { message } = response.data;
+
+          const notifyTime = startTime.subtract(2, 'hours').toDate();
+          let title = 'Reminder!';
+          let message = `You have booked ${currentApartment} ${currentBuilding} on ${selected} at ${
+            currentFocus.timeslot
+          }`;
+          notif.current.scheduleNotif(title, message, notifyTime);
+          /*           scheduleNotification(
+            'Reminder!',
+            `You have booked ${currentApartment} ${currentBuilding} on ${selected} at ${
+              currentFocus.timeslot
+            }`,
+            notifyTime,
+          ); */
+          /*           const {message} = response.data;
           Alert.alert('Booked!', message, [
             {
               title: 'Okay',
               onPress: () => {
-                this.onFocusPress(null);
+                onFocusPress(null);
               },
             },
-          ]);
+          ]); */
         }
       })
       // If we catch any errors connecting, let's update accordingly
       .catch(error => {
         if (error && error.data) {
-          const { message } = error.data;
+          const {message} = error.data;
           Alert.alert('Oops!', message, [
             {
               title: 'Okay',
               onPress: () => {
-                this.onFocusPress(null);
+                onFocusPress(null);
               },
             },
           ]);
@@ -112,291 +152,295 @@ class LaundreeScreen extends Component {
       });
   };
 
-  onFocusPress = currentFocus => {
-    this.setState(
-      {
-        currentFocus,
-      },
-      this.toggleBookButton,
-    );
+  const onFocusPress = currentFocus => {
+    setCurrentFocus(currentFocus);
+    toggleBookButton();
   };
 
-  getCurrentApartment = async () => {
-    const currentApartment = await AsyncStorage.getItem('apartment');
-    const currentBuilding = await AsyncStorage.getItem('building');
-    this.setState({
-      currentApartment,
-      currentBuilding,
-    });
-  };
+  const getCardColor = (apartment, timeslot) => {
+    const isTimePassed1 = isTimePassed(timeslot);
 
-  getCardColor = (bookedBy, timeslot) => {
-    const { theme } = this.props;
-    const { currentApartment, colors } = this.state;
-    const isTimePassed = this.isTimePassed(timeslot);
-    const isToday = this.isToday();
-    if (typeof bookedBy === 'undefined') {
+    const isToday1 = isToday();
+    const isPast1 = isPast();
+    if (isPast1) {
       return {
-        textColor: theme.colors.text,
-        backgroundColor:
-          isTimePassed && isToday ? theme.colors.disabled : 'white',
+        textColor: colors.text,
+        backgroundColor: colors.disabled,
       };
     }
-    if (bookedBy === currentApartment) {
+    if (apartment === currentApartment) {
       return {
-        textColor: 'white',
-        backgroundColor: colors.primary,
+        textColor: colors.text,
+        backgroundColor: colors.timeslotIsApartment,
+      };
+    }
+    if (typeof apartment === 'string' && apartment != currentApartment) {
+      return {
+        textColor: colors.text,
+        backgroundColor: colors.timeslotNotApartment,
+      };
+    }
+    if (apartment === currentApartment) {
+      return {
+        textColor: colors.calendarTimeslot,
+        backgroundColor: colors.calendarTimeslot,
       };
     }
     return {
-      textColor: 'white',
-      backgroundColor: colors.secondary,
+      textColor: colors.calendarTimeslot,
+      backgroundColor: colors.calendarTimeslot,
     };
   };
-  getColors = async () => {
-    const colors = await getColors();
-    this.setState({
-      colors,
-    });
+  const getCurrentApartmentBuilding = async () => {
+    const apartment = await AsyncStorage.getItem('apartment');
+    const building = await AsyncStorage.getItem('building');
+    setCurrentApartment(apartment);
+    setCurrentBuilding(building);
   };
-  getBuilding = async () => {
-    const building = await AsyncStorage.getItem("building");
-    this.setState({
-      building: building
-    });
+  useEffect(() => {
+    getCurrentApartmentBuilding();
+    getEvents();
+  }, [events]);
+
+  const onDayPress = day => {
+    setSelectedDay(day.dateString);
+    getEvents();
   };
 
-  getEvents() {
-    const { selected } = this.state;
+  const getEvents = () => {
     axios
       // This is where the data is hosted
       .get(
-        `api.vasketid.se/laundree1/public/bookingavailable?rid=1&date=${selected}`,
+        `http://167.99.133.22:5556/api/bookings/bookingavailable?rid=1&date=${selectedDay}`,
       )
       // Once we get a response and store data, let's change the loading state
       .then(response => {
-        console.log(response.data.timeslots);
-        this.setState({
-          events: response.data.timeslots,
-          isLoading: false,
-        });
+        setEvents(response.data.timeslots);
+        setIsLoading(false);
       })
       // If we catch any errors connecting, let's update accordingly
-      .catch(() => this.setState({ isLoading: false }));
-  }
-
-  toggleBookButton = () => {
-    const { isButtonVisible } = this.state;
-    this.setState({
-      isButtonVisible: !isButtonVisible,
-    });
+      .catch(() => setIsLoading(false));
   };
 
-  isTimePassed = timeslot => {
+  const toggleBookButton = () => {
+    setIsButtonVisible(!isButtonVisible);
+  };
+  const isTimePassed = timeslot => {
     const minutesOfDay = m => m.minutes() + m.hours() * 60;
-    const startTime = moment(timeslot.split('-')[0], 'hh:mm');
+    const startTime = moment(timeslot.split(' - ')[0], 'hh:mm');
     const endTime = moment(timeslot.split(' - ')[1], 'hh:mm');
     const currentTime = moment();
     return (
       minutesOfDay(currentTime) >=
       (minutesOfDay(startTime) +
         (minutesOfDay(endTime) === 0 ? 1459 : minutesOfDay(endTime))) /
-      2
+        2
     );
   };
 
-  isToday = () => {
-    const { selected } = this.state;
-    return moment(selected, 'YYYY-MM-DD').isSame(moment(), 'date');
+  const isToday = () => {
+    return moment(selectedDay, 'YYYY-MM-DD').isSame(moment(), 'date');
   };
-
-  isFocused = id => {
-    const { currentFocus } = this.state;
+  const isPast = () => {
+    return moment(selectedDay, 'YYYY-MM-DD').isBefore(moment(), 'date');
+  };
+  const isFocused = id => {
     if (currentFocus) {
       return currentFocus.tid === id;
     }
     return false;
   };
+  const RenderBookButton = () => {
+    if (isButtonVisible) {
+      return (
+        <TouchableOpacity
+          style={[colors.bookingButton, styles.floating]}
+          onPress={() => {
+            onFocusPress(null);
+          }}>
+          <Button
+            labelStyle={{color: colors.text}}
+            style={[styles.floating, {backgroundColor: colors.bookingButton}]}
+            mode="contained"
+            onPress={() => {
+              onBookPress();
+            }}>
+            Book now
+          </Button>
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  };
 
-  goToQRCode = () => {
-    const { navigation } = this.props;
-
+  const goToQRCode = () => {
     navigation.navigate('QRCode');
   };
-  goToConfirmedBooking = () => {
-    const { navigation } = this.props;
-
+  const goToConfirmedBooking = () => {
     navigation.navigate('BookingConfirmed');
   };
-  goToSomeComponent = () => {
-    const { navigation } = this.props;
-
+  const goToSomeComponent = () => {
     navigation.navigate('SomeComponent');
   };
-  renderBookButton = () => {
-    const { colors } = this.state;
-    return (
-      <TouchableOpacity
-        style={styles.floating}
-        onPress={() => this.onFocusPress(null)}>
-        <Button
-          style={{ backgroundColor: colors.primary }}
-          mode="contained"
-          onPress={this.onBookPress}>
-          Book now
-        </Button>
-      </TouchableOpacity>
-    );
+
+  const ShowBookingButton = timeslot_id => {
+    timeslotid.push(timeslot_id);
+    const lastItem = timeslotid[timeslotid.length - 1];
+    const secondlastItem = timeslotid[timeslotid.length - 2];
+    setIsButtonVisible(true);
+    if (lastItem === secondlastItem) {
+      setIsButtonVisible(false);
+      timeslotid.splice(0, timeslotid.length);
+      console.log(timeslot_id);
+    }
   };
+  return (
+    <View style={{height: '100%', backgroundColor: colors.background}}>
+      <CalendarList
+        theme={{
+          calendarBackground: colors.calendarBackground,
+          textSectionTitleColor: '#05526D',
+          dayTextColor: '#05526D',
+          todayTextColor: '#05526D',
+          selectedDayTextColor: '#05526D',
+          monthTextColor: '#05526D',
+          indicatorColor: '#05526D',
+          selectedDayBackgroundColor: '#05526D',
+          arrowColor: 'white',
+        }}
+        onDayPress={onDayPress}
+        minDate={moment().pas}
+        current={currentDay}
+        pastScrollRange={1}
+        futureScrollRange={2}
+        horizontal
+        pagingEnabled={true}
+        markedDates={{
+          [selectedDay]: {
+            selected: true,
+            selectedColor: colors.primary,
+          },
+        }}
+        renderHeader={date => {
+          const header = date.toString('MMMM yyyy');
+          const [month, year] = header.split(' ');
+          const textStyle = {
+            fontSize: 18,
+            fontWeight: 'bold',
+            // paddingTop: 10,
+            paddingBottom: 10,
+            color: '#05526D',
+            paddingRight: 5,
+          };
 
-  render() {
-    const { isLoading, events, selected, isButtonVisible, colors } = this.state;
-    const { navigate } = this.props.navigation;
-    const { theme } = this.props;
-
-    return (
-      <View style={styles.container}>
-        {/* <Appbar.Header style={{ backgroundColor: '#0f8679' }}>
-                    <Appbar.Content title="Boka" subtitle="Boka tvättid" />
-                    <Appbar.Action icon="qrcode" onPress={this.goToQRCode} />
-                    <Appbar.Action icon="check-bold" onPress={this.goToConfirmedBooking} />
-
-                </Appbar.Header> */}
-        <ScrollView style={{ flex: 1 }}>
-          <CalendarList
-            theme={{
-              calendarBackground: '#333248',
-              textSectionTitleColor: 'white',
-              dayTextColor: 'white',
-              todayTextColor: 'white',
-              selectedDayTextColor: 'white',
-              monthTextColor: 'white',
-              indicatorColor: 'white',
-              selectedDayBackgroundColor: '#333248',
-              arrowColor: 'white',
-              'stylesheet.calendar.header': {
-                dayHeader: {
-                  fontWeight: '600',
-                  color: '#48BFE3',
-                },
-              },
-              'stylesheet.day.basic': {
-                today: {
-                  borderColor: '#48BFE3',
-                  borderWidth: 0.8,
-                },
-                todayText: {
-                  color: '#5390D9',
-                  fontWeight: '800',
-                },
-              },
-            }}
-            current={this.state.currentDay}
-            pastScrollRange={1}
-            futureScrollRange={2}
-            horizontal
-            pagingEnabled={true}
-            markedDates={{
-              [selected]: {
-                selected: true,
-                selectedColor: colors.primary,
-              },
-            }}
-            renderHeader={date => {
-              const header = date.toString('MMMM yyyy');
-              const [month, year] = header.split(' ');
-              const textStyle = {
-                fontSize: 18,
-                fontWeight: 'bold',
-                // paddingTop: 10,
-                paddingBottom: 10,
-                color: '#5E60CE',
-                paddingRight: 5,
-              };
-
-              return (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    width: '100%',
-                    justifyContent: 'space-between',
-                    marginTop: 10,
-                    marginBottom: 10,
-                  }}>
-                  <Text
-                    style={{ marginLeft: 5, ...textStyle }}>{`${month}`}</Text>
-                  <Text style={{ marginRight: 5, ...textStyle }}>{year}</Text>
-                </View>
+          return (
+            <View
+              style={{
+                flexDirection: 'row',
+                width: '100%',
+                justifyContent: 'space-between',
+                marginTop: 10,
+                marginBottom: 10,
+              }}>
+              <Text style={{marginLeft: 5, ...textStyle}}>{`${month}`}</Text>
+              <Text style={{marginRight: 5, ...textStyle}}>{year}</Text>
+            </View>
+          );
+        }}
+      />
+      <ScrollView>
+        {!isLoading ? (
+          <View style={styles.cardsContainer}>
+            {events.map(function(timeslots) {
+              const {timeslot_id, apartment, timeslot} = timeslots;
+              const {textColor, backgroundColor} = getCardColor(
+                apartment,
+                timeslot,
               );
-            }}
-          />
-          {/* <Text>{`${selected}`}</Text> */}
-          <ScrollView style={styles.container}>
-            {!isLoading ? (
-              <View style={styles.cardsContainer}>
-                <Text>{this.state.building}</Text>
-                {events.map(timeslots => {
-                  const { tid, bookedBy, timeslot } = timeslots;
-                  const { textColor, backgroundColor } = this.getCardColor(
-                    bookedBy,
-                    timeslot,
-                  );
-                  const isTimePassed = this.isTimePassed(timeslot);
-                  const isFocused = this.isFocused(tid);
-                  const isToday = this.isToday();
-                  return (
-                    <TouchableOpacity
-                      key={tid}
-                      disabled={
-                        (isTimePassed && isToday) ||
-                        typeof bookedBy !== 'undefined'
-                      }
-                      onPress={() => this.onFocusPress(timeslots)}>
-                      <Card
-                        style={[
-                          styles.card,
-                          { backgroundColor },
-                          isFocused && { borderColor: colors.primary },
-                        ]}>
-                        <View>
-                          <Paragraph style={[styles.text, { color: textColor }]}>
-                            {timeslot}
-                          </Paragraph>
-                          <Paragraph style={[styles.text, { color: textColor }]}>
-                            {bookedBy}
-                          </Paragraph>
-                        </View>
-                      </Card>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : (
-                <Paragraph>Loading...</Paragraph>
-              )}
-          </ScrollView>
-          {isButtonVisible && this.renderBookButton()}
-        </ScrollView>
-      </View>
-    );
-  }
+              const isTimePassed1 = isTimePassed(timeslot);
+              const isFocused1 = isFocused(timeslot_id);
+              const isToday1 = isToday();
+              return (
+                <TouchableOpacity
+                  key={timeslot_id}
+                  disabled={
+                    (isTimePassed1 && isToday1) ||
+                    typeof bookedBy !== 'undefined'
+                  }
+                  onPress={() => {
+                    setCurrentFocus(timeslot_id);
+                    ShowBookingButton(timeslot_id);
+                  }}>
+                  <Card
+                    style={[
+                      styles.card,
+                      {backgroundColor},
+                      isFocused1 && {borderColor: colors.primary},
+                    ]}>
+                    <View>
+                      <Paragraph style={[styles.text, {color: colors.text}]}>
+                        {timeslot}
+                      </Paragraph>
+                      <Paragraph style={[styles.text, {color: textColor}]}>
+                        {apartment}
+                      </Paragraph>
+                    </View>
+                  </Card>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : (
+          <ActivityIndicator size="large" />
+        )}
+      </ScrollView>
+      {!isButtonVisible ? null : (
+        <TouchableOpacity
+          style={[colors.bookingButton, styles.floating]}
+          onPress={() => {
+            onFocusPress(null);
+          }}>
+          <Button
+            labelStyle={{color: colors.text}}
+            style={[styles.floating, {backgroundColor: colors.bookingButton}]}
+            mode="contained"
+            onPress={() => {
+              onBookPress();
+            }}>
+            Book now
+          </Button>
+        </TouchableOpacity>
+      )}
+      <TouchableRipple
+        onPress={() => {
+          toggleTheme();
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+          }}>
+          <Text>Dark Theme</Text>
+          <View pointerEvents="none">
+            <Switch value={colors.dark} />
+          </View>
+        </View>
+      </TouchableRipple>
+    </View>
+  );
 }
-
-LaundreeScreen.propTypes = {
-  navigation: PropTypes.object.isRequired,
-  theme: PropTypes.object.isRequired,
-};
-export default LaundreeScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ecf0f1',
   },
   cardsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
+    height: '100%',
   },
   card: {
     margin: normalize(4.5),
@@ -410,12 +454,13 @@ const styles = StyleSheet.create({
   },
 
   floating: {
-    position: 'absolute',
-    ...StyleSheet.absoluteFill,
-    padding: normalize(20),
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    bottom: 0,
+    color: 'white',
   },
   text: {
+    textAlign: 'center', // <-- the magic
     marginBottom: 0,
     fontSize: normalize(14),
   },

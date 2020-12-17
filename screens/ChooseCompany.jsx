@@ -1,62 +1,56 @@
-import React, {Component} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
   View,
   FlatList,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import axios from 'axios';
-import {Button, Searchbar} from 'react-native-paper';
+import {Button, Paragraph, Searchbar} from 'react-native-paper';
 import {ListItem} from 'react-native-elements';
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@callstack/async-storage';
 
-export default class ChooseCompany extends Component {
-  constructor() {
-    super();
-    this.state = {
-      isLoading: true,
-      text: '',
-      company2: '',
-      chooseButton: false,
-      image: '',
-    };
-    this.arrayholder = [];
-  }
+export default function ChooseCompany({navigation}) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [text, setText] = useState('');
+  const [company2, setCompany2] = useState('');
+  const [chooseButton, setChooseButton] = useState(false);
+  const [image, setImage] = useState('');
+  const [arrayholder, setArrayholder] = useState([]);
+  const [dataSource, setDataSource] = useState([]);
+  useEffect(() => {
+    axios.get('http://167.99.133.22:5556/api/foretag').then(response => {
+      setDataSource(response.data);
+      setIsLoading(false);
+      setArrayholder(response.data);
+    });
+  }, []);
+  const onPressCompany = async item => {
+    setCompany2(item.company), setImage(item.range);
 
-  componentDidMount() {
-    axios.get('http://192.168.0.10:5555/api/foretag').then(response => {
-      this.setState({dataSource: response.data, isLoading: false}, function() {
-        this.arrayholder = response.data;
-      });
-    });
-  }
-  
-  async onPressCompany(item) {
-    await this.setState({
-      company2: item.company,
-      image: item.image,
-    });
-    AsyncStorage.setItem('company', this.state.company2);
+    AsyncStorage.setItem('company', item.company);
 
-    this.props.navigation.navigate('ChoosenCompany', {
-      image: this.state.image,
-      company: this.state.company2,
+    navigation.navigate('ChoosenCompany', {
+      image: image,
+      company: item.company,
     });
-  }
-  renderItem = ({item}) => (
+  };
+  const renderItem = ({item}) => (
     <ListItem
-      title={item.company}
-      bottomDivider={true}
-      contentContainerStyle={styles.listView}
+      bottomDivider
       onPress={() => {
-        this.onPressCompany(item);
-      }}
-    />
+        onPressCompany(item);
+      }}>
+      <ListItem.Content style={styles.listView}>
+        <ListItem.Title>{item.company}</ListItem.Title>
+      </ListItem.Content>
+    </ListItem>
   );
-  SearchFilterFunction(text) {
+  const SearchFilterFunction = text => {
     //passing the inserted text in textinput
-    const newData = this.arrayholder.filter(function(item) {
+    const newData = arrayholder.filter(function(item) {
       //applying filter for the inserted text in search bar
       const itemData = item.company
         ? item.company.toUpperCase()
@@ -64,71 +58,63 @@ export default class ChooseCompany extends Component {
       const textData = text.toUpperCase();
       return itemData.indexOf(textData) > -1;
     });
-    this.setState({
-      //setting the filtered newData on datasource
-      //After setting the data it will automatically re-render the view
-      dataSource: newData,
-      text: text,
-    });
-  }
+    setDataSource(newData);
+    setText(text);
+  };
+  return (
+    <View style={{flex: 1}}>
+      <Image
+        style={{height: 100, width: '100%', resizeMode: 'contain'}}
+        source={{
+          uri: 'http://167.99.133.22:5556/uploads/foretag/cebola.png',
+        }}
+      />
 
-  render() {
-    if (this.state.isLoading) {
-      //Loading View while data is loading
-      return (
-        <View style={styles.loading}>
-          <ActivityIndicator />
-        </View>
-      );
-    }
+      <View style={{flex: 2}}>
+        {!chooseButton ? (
+          <View>
+            <Button
+              style={{marginTop: 250}}
+              mode="contained"
+              color="#3498DB"
+              labelStyle={{color: 'white', fontSize: 18}}
+              onPress={() => setChooseButton(true)}>
+              Välj din hyresvärd
+            </Button>
+            <Text style={[styles.baseText, {marginTop: 10}]}>
+              Finns inte din hyresvärd med?
+              <Text style={styles.innerText}>Kontakta oss</Text>
+            </Text>
+          </View>
+        ) : (
+          <View style={{marginTop: 250}}>
+            <View style={{height: 350}}>
+              <Searchbar
+                placeholder="Search"
+                onChangeText={text => SearchFilterFunction(text)}
+                value={text}
+              />
 
-    if (!this.state.chooseButton) {
-      //Loading View while data is loading
-      return (
-        <View style={styles.MainContainer}>
-          <Button
-            style={{marginTop: 125}}
-            mode="contained"
-            color="#3498DB"
-            labelStyle={{color: 'white', fontSize: 18}}
-            onPress={() => this.setState({chooseButton: true})}>
-            Välj din hyresvärd
-          </Button>
-          <Text style={[styles.baseText, {marginTop: 10}]}>
-            Finns inte din hyresvärd med?
-            <Text style={styles.innerText}> Kontakta oss</Text>
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.MainContainer}>
-        <Text>{this.state.company2}</Text>
-        <View style={styles.bottomView}>
-          <Searchbar
-            placeholder="Search"
-            onChangeText={text => this.SearchFilterFunction(text)}
-            value={this.state.text}
-          />
-
-          <FlatList
-            keyExtractor={(item, index) => index.toString()}
-            data={this.state.dataSource}
-            renderItem={this.renderItem}
-          />
-          <Button
-            style={{marginBottom: 25, backgroundColor: 'lightgrey'}}
-            onPress={() => this.setState({chooseButton: false})}
-            color="white"
-            mode="contained">
-            Avbryt
-          </Button>
-        </View>
+              <FlatList
+                keyExtractor={(item, index) => index.toString()}
+                data={dataSource}
+                renderItem={renderItem}
+              />
+              <Button
+                style={{backgroundColor: 'lightgrey'}}
+                onPress={() => setChooseButton(false)}
+                color="white"
+                mode="contained">
+                Avbryt
+              </Button>
+            </View>
+          </View>
+        )}
       </View>
-    );
-  }
+    </View>
+  );
 }
+
 const styles = StyleSheet.create({
   container1: {
     flex: 1,
@@ -175,9 +161,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   MainContainer: {
+    marginTop: 50,
+
+    backgroundColor: '#fff',
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: Platform.OS === 'ios' ? 20 : 0,
+  },
+  MainContainer1: {
+    marginTop: 50,
+    backgroundColor: '#fff',
+    flex: 1,
+    alignItems: 'center',
     paddingTop: Platform.OS === 'ios' ? 20 : 0,
   },
   bottomView: {

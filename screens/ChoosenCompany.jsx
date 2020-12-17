@@ -1,19 +1,18 @@
 import React, {useState, useEffect} from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-} from 'react-native';
+import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
 import axios from 'axios';
 import {Button} from 'react-native-elements';
 import AsyncStorage from '@react-native-community/async-storage';
+import Dios from '../assets/dios_logo_svart.png';
+import {Card, withTheme, Appbar} from 'react-native-paper';
+import {useTheme} from '@react-navigation/native';
 
-export default function ChoosenCompany({navigation}) {
+function ChoosenCompany({navigation}) {
   // const company = route.params;
   // const { image } = route.params;
   const [, setData] = useState({});
   const [currentCompany, setCurrentCompany] = useState('');
+  const {colors} = useTheme();
 
   const getCurrentApartment = async () => {
     const getCompany = await AsyncStorage.getItem('company');
@@ -22,7 +21,7 @@ export default function ChoosenCompany({navigation}) {
   useEffect(() => {
     getCurrentApartment();
     const fetchProduct = async () => {
-      const response = await axios.get('http://192.168.0.10:5555/api/foretag');
+      const response = await axios.get('http://167.99.133.22:5556/api/foretag');
       setData(response.data);
     };
     fetchProduct();
@@ -35,7 +34,7 @@ export default function ChoosenCompany({navigation}) {
           <Image
             style={{height: 100, width: '100%', resizeMode: 'contain'}}
             source={{
-              uri: 'http://192.168.0.10:5555/uploads/foretag/lulebo.png',
+              uri: 'http://167.99.133.22:5556/uploads/foretag/lulebo.png',
             }}
           />
         );
@@ -43,18 +42,24 @@ export default function ChoosenCompany({navigation}) {
         return (
           <Image
             style={{height: 100, width: '100%', resizeMode: 'contain'}}
-            source={{
-              uri: 'http://192.168.0.10:5555/uploads/foretag/dios.png',
-            }}
+            source={Dios}
           />
         );
       case 'Heimstaden':
         return <Text>You are a Manager.</Text>;
+      case 'Demo Fastigheter':
+        return (
+          <Image
+            style={{height: 100, width: '100%', resizeMode: 'contain'}}
+            source={{
+              uri: 'http://167.99.133.22:5556/uploads/foretag/cebola.png',
+            }}
+          />
+        );
       default:
         return <Text>You are a User.</Text>;
     }
   };
-  console.log(currentCompany);
   return (
     <View style={styles.container}>
       <View style={{height: '100%'}}>
@@ -67,7 +72,6 @@ export default function ChoosenCompany({navigation}) {
       <View style={styles.background}>
         <View style={{flex: 1, alignItems: 'center', top: 150}}>
           <SetUserInterfaceFromChooseCompany value={currentCompany} />
-
           <Text style={{color: 'white', fontFamily: 'Open Sans', fontSize: 18}}>
             Välkommen till din digitala bokning
           </Text>
@@ -98,7 +102,7 @@ export default function ChoosenCompany({navigation}) {
               title="Logga in"
               buttonStyle={{
                 justifyContent: 'space-between',
-                backgroundColor: '#0f8679',
+                backgroundColor: colors.button,
               }}
               onPress={() => {
                 navigation.navigate('SignInScreen');
@@ -108,7 +112,7 @@ export default function ChoosenCompany({navigation}) {
               containerStyle={{width: 150, marginBottom: 25}}
               buttonStyle={{
                 justifyContent: 'space-between',
-                backgroundColor: '#0f8679',
+                backgroundColor: colors.button,
               }}
               iconRight={true}
               icon={{
@@ -141,17 +145,14 @@ export default function ChoosenCompany({navigation}) {
     </View>
   );
 }
-
+export default withTheme(ChoosenCompany);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // flexDirection: 'column',
-    // justifyContent: 'center',
-    // alignItems: 'center',
   },
   background: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: '#fff',
   },
   SubmitButtonStyle: {
     width: 200,

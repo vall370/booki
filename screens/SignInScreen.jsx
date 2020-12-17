@@ -20,6 +20,9 @@ import Users from '../model/users';
 import {Button} from 'react-native-paper';
 import {AuthContext} from '../components/context';
 import BackButton from '../components/BackButton';
+import Dios from '../assets/dios_logo_svart.png';
+import {useTheme} from '@react-navigation/native';
+import Axios from 'axios';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -29,9 +32,9 @@ UIManager.setLayoutAnimationEnabledExperimental &&
   UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export default function SignInScreen({route, navigation}) {
-  const [building, setBuilding] = useState('Demovägen 1');
+  const [building, setBuilding] = useState('Demovägen 22');
   const [apartment, setApartment] = useState('1001');
-  const [password, setPassword] = useState('password');
+  const [password, setPassword] = useState('1234');
   const [isLoading, setIsLoading] = useState(false);
   const [isBuildingValid, setIsBuildingValid] = useState(false);
   const [isApartmentValid, setIsApartmentValid] = useState(false);
@@ -40,6 +43,8 @@ export default function SignInScreen({route, navigation}) {
   const [isValidUser, setIsValidUser] = useState(true);
   const [isValidPassword, setIsValidPassword] = useState(true);
   const [currentCompany, setCurrentCompany] = useState('');
+  const [foundUser, setFoundUser] = useState([]);
+  const {colors} = useTheme();
 
   // const company = route.params;
 
@@ -65,16 +70,29 @@ export default function SignInScreen({route, navigation}) {
       case 'Diös Fastigheter':
         return (
           <View elevation={25} style={styles.buttonContainer}>
-            <Image
-              source={require('../assets/L_dios.png')}
-              style={{alignSelf: 'center'}}
-            />
+            <Image source={Dios} style={{alignSelf: 'center'}} />
           </View>
         );
       case 'Heimstaden':
         return <Text>You are a Manager.</Text>;
+      case 'Demo Fastigheter':
+        return (
+          <Image
+            style={{height: 100, width: '100%', resizeMode: 'contain'}}
+            source={{
+              uri: 'http://167.99.133.22:5556/uploads/foretag/cebola.png',
+            }}
+          />
+        );
       default:
-        return <Text>You are a User.</Text>;
+        return (
+          <Image
+            style={{height: 100, width: '100%', resizeMode: 'contain'}}
+            source={{
+              uri: 'http://167.99.133.22:5556/uploads/foretag/cebola.png',
+            }}
+          />
+        );
     }
   };
   // const textInputChange = (val) => {
@@ -133,17 +151,24 @@ export default function SignInScreen({route, navigation}) {
   // }
 
   const loginHandle = (apartment, building, password) => {
-    const foundUser = Users.filter(item => {
+    Axios.post('http://167.99.133.22:5556/api/users/userlogin', {
+      apartment: apartment,
+      building: building,
+      password: password,
+    })
+      .then(response => {
+        setFoundUser(response.data);
+      })
+      // If we catch any errors connecting, let's update accordingly
+      .catch(console.log);
+    /*          const foundUser = Users.filter(item => {
       return (
         apartment == item.apartment &&
         building == item.building &&
         password == item.password
       );
-    });
-    if (foundUser.length == 0) {
-      console.log('Invalid User!', 'Something is incorrect.');
-      return;
-    }
+    }); */
+
     AsyncStorage.setItem('building', building);
     AsyncStorage.setItem('apartment', apartment);
 
@@ -159,7 +184,9 @@ export default function SignInScreen({route, navigation}) {
         <SetUserInterfaceFromChooseCompany value={currentCompany} />
       </View>
       <View style={styles.header}>
-        <Text style={styles.text_header}>Logga in</Text>
+        <Text style={[styles.text_header, {color: colors.button}]}>
+          Logga in
+        </Text>
       </View>
       <KeyboardAvoidingView
         contentContainerStyle={styles.loginContainer}
@@ -264,7 +291,7 @@ export default function SignInScreen({route, navigation}) {
             <Button
               mode="text"
               style={styles.button}
-              color={'#0f8679'}
+              color={colors.button}
               onPress={() => {
                 console.log('');
               }}>
@@ -273,7 +300,7 @@ export default function SignInScreen({route, navigation}) {
             <Button
               mode="contained"
               style={styles.button}
-              color={'#0f8679'}
+              color={colors.button}
               onPress={() => {
                 loginHandle(apartment, building, password);
               }}>
@@ -330,8 +357,8 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   text_header: {
-    color: '#0f8679',
-    fontWeight: 'bold',
+    /*     color: colors.button,
+     */ fontWeight: 'bold',
     fontSize: 30,
   },
   image: {
@@ -364,6 +391,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    margin: 20,
   },
   container: {
     flex: 1,

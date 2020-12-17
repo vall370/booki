@@ -48,10 +48,23 @@ const App = () => {
       ...NavigationDefaultTheme.colors,
       ...PaperDefaultTheme.colors,
       tabBarColor: '#05526D',
-      background: '#05526D',
-      button: '#006845',
-      text: '#333333',
-      error: '#EF5F6D'
+      button: '#0f8679',
+      error: '#EF5F6D',
+      primary: 'rgb(255, 45, 85)',
+      background: 'rgb(242, 242, 242)',
+      card: 'rgb(255, 255, 85)',
+      text: 'rgb(28, 28, 30)',
+      border: 'rgb(199, 199, 204)',
+      notification: 'rgb(255, 69, 58)',
+      disabled: 'rgb(108, 97, 110)',
+      calendarTimeslot: '#ffffff',
+      timeslotNotApartment: '#ff6961',
+      timeslotIsApartment: '#77dd77',
+      bookingIsToday: '#aec6cf',
+      bookingIsPast: '#cfaeb6',
+      bookingIsFuture: '#cfc8ae',
+      bookingCardColor: '#ffffff'
+
     },
   };
 
@@ -61,8 +74,18 @@ const App = () => {
     colors: {
       ...NavigationDarkTheme.colors,
       ...PaperDarkTheme.colors,
-      background: '#333333',
+      tabBarColor: '#05526D',
+      bookingButton: '#05526D',
+      background: '#1a1a1b',
       text: '#ffffff',
+      calendarBackground: '#1a1a1b',
+      calendarTimeslot: '#303030',
+      timeslotNotApartment: '#600000',
+      timeslotIsApartment: '#556B2F',
+      bookingIsToday: '#aec6cf',
+      bookingIsPast: '#cfaeb6',
+      bookingIsFuture: '#cfc8ae',
+      bookingCardColor: '#272727',
     },
   };
 
@@ -110,8 +133,9 @@ const App = () => {
       signIn: async (foundUser) => {
         // setUserToken('fgkj');
         // setIsLoading(false);
-        const userToken = String(foundUser[0].userToken);
-        const userName = foundUser[0].username;
+        console.log(foundUser)
+        const userToken = String(foundUser.jwt);
+        const userName = foundUser.apartment;
 
         try {
           await AsyncStorage.setItem('userToken', userToken);
